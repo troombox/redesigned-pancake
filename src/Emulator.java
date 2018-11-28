@@ -1,31 +1,29 @@
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.util.Arrays;
 
 
 public class Emulator extends Application {
 
+    //size of chip state array
+    private static final int CHIP_STATE = 20;
+
     //GUI
     Stage window;
-    Label[] labels = new Label[21];
-    TextField[] textFields =  new TextField[21];
+    Label[] labels = new Label[CHIP_STATE];
+    TextField[] textFields =  new TextField[CHIP_STATE];
+    TextField disassembler = new TextField();
 
     //Emulation
     private String path = "C:\\Pong.ch8";
     private Chip chip = new Chip();
-    private int[] chip_state = new int[21];
+    private int[] chip_state = new int[CHIP_STATE];
 
     public static void main(String []args) {
         launch(args);
@@ -52,28 +50,40 @@ public class Emulator extends Application {
         //
 
 
-        for(int i=0; i < labels.length-1; i++){
-            gridPane.add(labels[i],0,i);
+        for(int i=0; i < labels.length; i++){
+            int c_index = (i < 10) ? 0 : 3;
+            int r_index = (i < 10) ? i : (i-10);
+            gridPane.add(labels[i],c_index,r_index);
         }
 
         for(int i=0; i < textFields.length; i++){
-            gridPane.add(textFields[i],1,i);
+            int c_index = (i < 10) ? 1 : 4;
+            int r_index = (i < 10) ? i : (i-10);
+            gridPane.add(textFields[i],c_index,r_index);
         }
+
+        //disassembler data window
+        disassembler.setEditable(false);
+        gridPane.add(disassembler,5,9);
+
 
         //Buttons: Load, Clear, Step
         Button loadButton = new Button("Load");
+        loadButton.setPrefWidth(50);
         loadButton.setOnAction(e -> {
             chip.loadProgram(path);
             updateChipState();
         });
 
         Button clearButton = new Button("Clear");
+        clearButton.setPrefWidth(50);
         clearButton.setOnAction(e -> {
             chip = new Chip();
             updateChipState();
         });
 
         Button stepButton = new Button("Step");
+        stepButton.setPrefWidth(50);
         stepButton.setOnAction(e -> {
             try {
                 chip.emulateChip();
@@ -83,13 +93,13 @@ public class Emulator extends Application {
             }
         });
 
-        gridPane.add(loadButton,1,22);
-        gridPane.add(clearButton,2,22);
-        gridPane.add(stepButton,3,22);
+        gridPane.add(loadButton,1,12);
+        gridPane.add(clearButton,2,12);
+        gridPane.add(stepButton,3,12);
 
 
 
-        Scene scene = new Scene(gridPane, 400, 700);
+        Scene scene = new Scene(gridPane, 500, 400);
         window.setScene(scene);
         window.show();
 
@@ -108,6 +118,8 @@ public class Emulator extends Application {
     private void setUpTextFields(){
         for (int i = 0; i < textFields.length; i++ ){
             textFields[i] = new TextField(correctToHexString(chip_state[i],4));
+            textFields[i].setEditable(false);
+            textFields[i].setPrefWidth(50);
         }
     }
 
@@ -115,6 +127,9 @@ public class Emulator extends Application {
         for (int i = 0; i < textFields.length; i++ ){
             textFields[i].setText(correctToHexString(chip_state[i],4));
         }
+        int OPcode = chip_state[CHIP_STATE-1];
+        Disassembler d = new Disassembler(OPcode);
+        disassembler.setText(d.DisassembleOp());
     }
 
     private void updateChipState(){

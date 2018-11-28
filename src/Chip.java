@@ -6,6 +6,7 @@ public class Chip {
     private static final int MEMORY_START_POINT = 0x200; //should be 512 / 0x200.
     private static final int STACK_START_POINT = 0xea0; // 96 bytes, up to 0xEFF
     private static final int DISPLAY_START_POINT = 0xf00; //256 bytes, up to 0xFFF
+    private static final int CHIP_STATE = 20; //size of array that transfers the chip state to GUI
 
     //RAM
     private Memory memory;
@@ -160,10 +161,11 @@ public class Chip {
                 int regY = OPcode[1] >> 4;
                 int height = OPcode[1] & 0x0f;
                 for(int i=0; i<height; i++){
-                    if( display.setPixels(V[regX],V[regY+i],memory.readMemoryAtAddress(this.I+i)) ){
+                    if( display.setPixels(V[regX],V[regY-i],memory.readMemoryAtAddress(this.I+i)) ){
                         V[0xf] = 1;
                     }
                 }
+                this.PC+=2;
             } break;
             case 0x0e: unimplementedOPcode(OPcode[0]); break;
             case 0x0f: unimplementedOPcode(OPcode[0]); break;
@@ -188,7 +190,7 @@ public class Chip {
         [19]-[20]: OP code
     */
     public int[] getChipState(){
-        int[] chip_state = new int[21];
+        int[] chip_state = new int[CHIP_STATE];
         try {
             for(int i=0; i<16; i++){
                 chip_state[i]=this.V[i];
@@ -196,8 +198,7 @@ public class Chip {
             chip_state[16]=this.I;
             chip_state[17]=this.SP;
             chip_state[18]=this.PC;
-            chip_state[19]=memory.readMemoryAtAddress(this.PC);
-            chip_state[20]=memory.readMemoryAtAddress(this.PC+1);
+            chip_state[19]= (memory.readMemoryAtAddress(this.PC) << 8) | memory.readMemoryAtAddress(this.PC+1);
         } catch (Exception e) {
             e.printStackTrace();
         }

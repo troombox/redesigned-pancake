@@ -17,13 +17,24 @@ public class Display {
             data_array[i] = (byte)((data >> i) & 0x01);
         }
         //now we set them into "display", starting from X,Y and going left to right
+        //for some reason the program wants us to go out of screen, so we'll check for it,
+        // and disregard the out-of-screen pixels
+        //TODO: check why there are out-of-screen pixels.
         for(int i=0; i<8; i++){
-            //checking for collision
-            if(this.display[coord_X+i][coord_Y] != data_array[i]){
-                collision = true;
+            //checking for o-o-s
+            if((coord_X+i)>63){
+                continue;
             }
-            //XOR'ing the pixels in "display"
-            this.display[coord_X+i][coord_Y] ^= data_array[i];
+            else{
+                //checking for collision
+                System.out.println("X:"+coord_X+" i:"+i+" Coord:("+coord_X+i+","+coord_Y+")");
+                if(this.display[coord_X+i][coord_Y] > data_array[i]){
+                    collision = true;
+                }
+                //XOR'ing the pixels in "display"
+                this.display[coord_X+i][coord_Y] ^= data_array[i];
+            }
+
         }
         return collision;
     }
