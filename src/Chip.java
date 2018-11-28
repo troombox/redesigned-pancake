@@ -1,7 +1,7 @@
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Chip {
-
+    //constants, in case they'll be needed
     private static final int MAX_MEMORY_SIZE = 4096;
     private static final int MEMORY_START_POINT = 0x200; //should be 512 / 0x200.
     private static final int STACK_START_POINT = 0xea0; // 96 bytes, up to 0xEFF
@@ -9,6 +9,9 @@ public class Chip {
 
     //RAM
     private Memory memory;
+
+    //Display data
+    private Display display;
 
     //8-bit registers
     private short[] V = new short[16];
@@ -25,24 +28,10 @@ public class Chip {
 
     public Chip(){
         memory = new Memory();
+        display = new Display();
         PC = MEMORY_START_POINT;
         SP = STACK_START_POINT;
         display_pointer = DISPLAY_START_POINT;
-    }
-
-    private void unimplementedOPcode(int OPcode){
-        System.out.println( Integer.toHexString(OPcode) + " not implemented yet" );
-    }
-
-    public void loadProgram(String filepath){
-        if(PC != MEMORY_START_POINT){
-            memory.clearMemory();
-            PC = MEMORY_START_POINT;
-            SP = STACK_START_POINT;
-            display_pointer = DISPLAY_START_POINT;
-        }
-        memory.loadMemoryFromFile(filepath,PC);
-        PC = MEMORY_START_POINT;
     }
 
     public void emulateChip() throws Exception{
@@ -51,15 +40,26 @@ public class Chip {
         OPcode[1] = memory.readMemoryAtAddress(this.PC+1);
         int first_nibble = (OPcode[0] & 0xf0) >> 4;
         switch(first_nibble){
-            case 0x00: unimplementedOPcode(OPcode[0]); break;
+            case 0x00: {
+                if (OPcode[1] == 0xe0){     //CLS
+                    display.clearDisplay();
+                    this.PC+=2;
+                }
+                else if (OPcode[1] == 0xee){    //RET
+                    this.SP--;
+                    this.PC = memory.readMemoryAtAddress(this.SP);
+                    this.PC+=2;
+                }
+                else System.out.printf("ERROR, OP 00%02X\n", OPcode[1]);
+            } break;
             case 0x01: {    //JMP NNN
                 int new_pc_address = (OPcode[0] & 0x0f) << 8 | OPcode[1];
                 this.PC = new_pc_address;
             } break;
-            case 0x02: {
+            case 0x02: {    //CALL
                 int new_pc_address = (OPcode[0] & 0x0f) << 8 | OPcode[1];
-                memory.writeMemoryAtAddress(SP,(short)this.PC);
-                SP++;
+                memory.writeMemoryAtAddress(this.SP,(short)this.PC);
+                this.SP++;
                 this.PC = new_pc_address;
             } break;
             case 0x03: {    //SKP.E
@@ -88,7 +88,51 @@ public class Chip {
                 V[reg] += OPcode[1];
                 this.PC+=2;
             } break;
-            case 0x08: unimplementedOPcode(OPcode[0]); break;
+            case 0x08: {
+                int second_nibble = OPcode[1] & 0x0f;
+                int reg1 = OPcode[0] & 0x0f;
+                int reg2 = OPcode[1] >> 4;
+                switch (second_nibble){
+                    case 0x00: {V[reg1] = V[reg2]; this.PC+=2;} break;                    //MOV
+                    case 0x01: {V[reg1] = (short)(V[reg1]|V[reg2]); this.PC+=2;} break;   //OR
+                    case 0x02: {V[reg1] = (short)(V[reg1]&V[reg2]); this.PC+=2;} break;   //AND
+                    case 0x03: {V[reg1] = (short)(V[reg1]^V[reg2]); this.PC+=2;} break;   //XOR
+                    case 0x04: {    //ADD.
+                        V[reg1]+=V[reg2];
+                        if(V[reg1]>0xff){
+                            V[0xf] = 1; //carry
+                        }
+                        V[reg1] = (short)(V[reg1] & 0xff); //making sure there are no bits over
+                        this.PC+=2;
+                    } break;
+                    case 0x05: {    //SUB.
+                        while(V[reg2]>V[reg1]){
+                            V[reg1]*=2;
+                            V[0xf] = 0; //borrow
+                        }
+                        V[reg1]-=V[reg2];
+                        this.PC+=2;
+                    } break;
+                    case 0x06: {    //SHR
+                        V[0xf] = (short)(V[reg1] & 0xfe); //lsb saved to VF
+                        V[reg1] = (short)(V[reg1] >> 1);
+                        this.PC+=2;
+                    } break;
+                    case 0x07: {    //SUBB.
+                        while(V[reg1]>V[reg2]){
+                            V[reg1]*=2;
+                            V[0xf] = 0; //borrow
+                        }
+                        V[reg1] = (short)(V[reg2] - V[reg1]);
+                        this.PC+=2;
+                    } break;
+                    case 0x0e: {    //SHL
+                        V[0xf] = (short)(V[reg1] & 0xef); //msb saved to VF
+                        V[reg1] = (short)(V[reg1] << 1);
+                        this.PC+=2;
+                    } break;
+                }
+            } break;
             case 0x09: {    //SKP.NE
                 int reg1 = OPcode[0] & 0x0f;
                 int reg2 = OPcode[1] >> 4;
@@ -111,7 +155,16 @@ public class Chip {
                 V[reg] = (short)(random & OPcode[1]);
                 this.PC+=2;
             } break;
-            case 0x0d: unimplementedOPcode(OPcode[0]); break;
+            case 0x0d: {
+                int regX = OPcode[0] & 0x0f;
+                int regY = OPcode[1] >> 4;
+                int height = OPcode[1] & 0x0f;
+                for(int i=0; i<height; i++){
+                    if( display.setPixels(V[regX],V[regY+i],memory.readMemoryAtAddress(this.I+i)) ){
+                        V[0xf] = 1;
+                    }
+                }
+            } break;
             case 0x0e: unimplementedOPcode(OPcode[0]); break;
             case 0x0f: unimplementedOPcode(OPcode[0]); break;
         }
@@ -125,5 +178,26 @@ public class Chip {
         System.out.println("I:"+this.I);
         for(int i=0;i<16;i++) System.out.println("V[" + i + "]:" + V[i]);
     }
+
+    //TEMP FUNCTIONS
+    private void unimplementedOPcode(int OPcode){
+        System.out.println( Integer.toHexString(OPcode) + " not implemented yet" );
+    }
+    //END TEMP FUNCTIONS
+
+    //function to load the memory from file
+    //if PC is not in the beginning - we reset everything first
+    public void loadProgram(String filepath){
+        if(PC != MEMORY_START_POINT){
+            memory.clearMemory();
+            PC = MEMORY_START_POINT;
+            SP = STACK_START_POINT;
+            display_pointer = DISPLAY_START_POINT;
+        }
+        memory.loadMemoryFromFile(filepath,PC);
+        PC = MEMORY_START_POINT;
+    }
+
+
 
 }
