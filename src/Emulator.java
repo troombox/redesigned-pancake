@@ -12,15 +12,20 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
+
 
 public class Emulator extends Application {
 
     //GUI
     Stage window;
+    Label[] labels = new Label[21];
+    TextField[] textFields =  new TextField[21];
 
     //Emulation
-    String path = "C:\\Pong.ch8";
-    Chip chip = new Chip();
+    private String path = "C:\\Pong.ch8";
+    private Chip chip = new Chip();
+    private int[] chip_state = new int[21];
 
     public static void main(String []args) {
         launch(args);
@@ -33,61 +38,96 @@ public class Emulator extends Application {
         window.setTitle("Emulator State");
 
         //Labels: V0 - VF, I, SP, PC, OP
-        Label labelRegV0 = new Label("V0:");
-        Label labelRegV1 = new Label("V1:");
-        Label labelRegV2 = new Label("V2:");
-        Label labelRegV3 = new Label("V3:");
-        Label labelRegV4 = new Label("V4:");
-        Label labelRegV5 = new Label("V5:");
-        Label labelRegV6 = new Label("V6:");
-        Label labelRegV7 = new Label("V7:");
-        Label labelRegV8 = new Label("V8:");
-        Label labelRegV9 = new Label("V9:");
-        Label labelRegVA = new Label("VA:");
-        Label labelRegVB = new Label("VB:");
-        Label labelRegVC = new Label("VC:");
-        Label labelRegVD = new Label("VD:");
-        Label labelRegVE = new Label("VE:");
-        Label labelRegVF = new Label("VF:");
-
-        Label labelI = new Label("I:");
-        Label labelSP = new Label("SP:");
-        Label labelPC = new Label("PC:");
-        Label labelOP = new Label("OP");
+        setUpLabels();
 
         //TextFields: V0 - VF, I, SP, PC, OP
-        TextField textRegV0 = new TextField();
+        setUpTextFields();
 
         GridPane gridPane = new GridPane();
-        gridPane.setHgap(10);
-        gridPane.setVgap(10);
-        gridPane.setGridLinesVisible(true);
         gridPane.setAlignment(Pos.TOP_CENTER);
-        gridPane.addColumn(0,labelRegV0, labelRegV1, labelRegV2, labelRegV3, labelRegV4, labelRegV5,
-                labelRegV6, labelRegV7, labelRegV8, labelRegV9, labelRegVA, labelRegVB, labelRegVC, labelRegVD,
-                labelRegVE, labelRegVF, labelI, labelSP, labelPC, labelOP);
-        gridPane.addColumn(1,textRegV0);
+        gridPane.setHgap(5);
+        gridPane.setVgap(5);
+        //debug option
+        gridPane.setGridLinesVisible(false);
+        //
+
+
+        for(int i=0; i < labels.length-1; i++){
+            gridPane.add(labels[i],0,i);
+        }
+
+        for(int i=0; i < textFields.length; i++){
+            gridPane.add(textFields[i],1,i);
+        }
 
         //Buttons: Load, Clear, Step
         Button loadButton = new Button("Load");
-        loadButton.setOnAction(e -> chip.loadProgram(path));
+        loadButton.setOnAction(e -> {
+            chip.loadProgram(path);
+            updateChipState();
+        });
 
         Button clearButton = new Button("Clear");
-        clearButton.setOnAction(e -> chip = new Chip());
+        clearButton.setOnAction(e -> {
+            chip = new Chip();
+            updateChipState();
+        });
 
         Button stepButton = new Button("Step");
         stepButton.setOnAction(e -> {
             try {
                 chip.emulateChip();
+                updateChipState();
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
         });
 
-        Scene scene = new Scene(gridPane, 200, 600);
+        gridPane.add(loadButton,1,22);
+        gridPane.add(clearButton,2,22);
+        gridPane.add(stepButton,3,22);
+
+
+
+        Scene scene = new Scene(gridPane, 400, 700);
         window.setScene(scene);
         window.show();
 
+    }
+
+    private void setUpLabels(){
+        for (int i = 0; i < 16; i++ ){
+            labels[i] = new Label("V"+correctToHexString(i,1)+":");
+        }
+        labels[16] = new Label("I:");
+        labels[17] = new Label("SP:");
+        labels[18] = new Label("PC:");
+        labels[19] = new Label("OP:");
+    }
+
+    private void setUpTextFields(){
+        for (int i = 0; i < textFields.length; i++ ){
+            textFields[i] = new TextField(correctToHexString(chip_state[i],4));
+        }
+    }
+
+    private void updateTextFields(){
+        for (int i = 0; i < textFields.length; i++ ){
+            textFields[i].setText(correctToHexString(chip_state[i],4));
+        }
+    }
+
+    private void updateChipState(){
+        chip_state = chip.getChipState();
+        updateTextFields();
+        System.out.println(Arrays.toString(chip_state));
+    }
+
+    private String correctToHexString(int data, int length_to_show){
+        String temp = Integer.toHexString(data);
+        while (temp.length() < length_to_show) temp = "0" + temp;
+        temp = temp.toUpperCase( );
+        return temp;
     }
 
 
@@ -125,4 +165,9 @@ public class Emulator extends Application {
         layout2.getChildren().addAll(label,button2);
         scene2 = new Scene(layout2, 200, 200);
         primaryStage.setScene(scene1);
-        primaryStage.show();*/
+        primaryStage.show();
+         gridPane.addColumn(0,labelRegV0, labelRegV1, labelRegV2, labelRegV3, labelRegV4, labelRegV5,
+                labelRegV6, labelRegV7, labelRegV8, labelRegV9, labelRegVA, labelRegVB, labelRegVC, labelRegVD,
+                labelRegVE, labelRegVF, labelI, labelSP, labelPC, labelOP);
+
+        */

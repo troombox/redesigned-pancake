@@ -187,7 +187,7 @@ public class Chip {
         [18]: PC
         [19]-[20]: OP code
     */
-    public int[] chipState(){
+    public int[] getChipState(){
         int[] chip_state = new int[21];
         try {
             for(int i=0; i<16; i++){
