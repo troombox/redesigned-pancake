@@ -157,20 +157,29 @@ public class Chip {
                 this.PC+=2;
             } break;
             case 0x0d: {
-                int regX = OPcode[0] & 0x0f;
-                int regY = OPcode[1] >> 4;
+                int reg1 = OPcode[0] & 0x0f;
+                int reg2 = OPcode[1] >> 4;
                 int height = OPcode[1] & 0x0f;
-                for(int i=0; i<height; i++){
-                    if( display.setPixels(V[regX],V[regY-i],memory.readMemoryAtAddress(this.I+i)) ){
-                        V[0xf] = 1;
-                    }
-                }
+                    opcodeDUtility(V[reg1], V[reg2], height);
                 this.PC+=2;
             } break;
             case 0x0e: unimplementedOPcode(OPcode[0]); break;
             case 0x0f: unimplementedOPcode(OPcode[0]); break;
         }
 
+    }
+
+    //UTILITY functions:
+    private void opcodeDUtility(int X_coord, int Y_coord, int height){
+        try {
+            for(int i = height-1; i >= 0; i--){
+                if(display.setPixels((short)X_coord,(short)(Y_coord+i),memory.readMemoryAtAddress(this.I+i))){
+                    V[0xf] = 1; // there was a collision
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void dumpChipDataToOut(){

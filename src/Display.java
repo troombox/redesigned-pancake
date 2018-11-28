@@ -21,13 +21,13 @@ public class Display {
         // and disregard the out-of-screen pixels
         //TODO: check why there are out-of-screen pixels.
         for(int i=0; i<8; i++){
-            //checking for o-o-s
+            //checking for o-o-s/*
             if((coord_X+i)>63){
                 continue;
             }
             else{
                 //checking for collision
-                System.out.println("X:"+coord_X+" i:"+i+" Coord:("+coord_X+i+","+coord_Y+")");
+                //System.out.println("X:"+coord_X+" i:"+i+" Coord:("+(coord_X+i)+","+coord_Y+")");
                 if(this.display[coord_X+i][coord_Y] > data_array[i]){
                     collision = true;
                 }

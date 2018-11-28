@@ -135,7 +135,7 @@ public class Emulator extends Application {
     private void updateChipState(){
         chip_state = chip.getChipState();
         updateTextFields();
-        System.out.println(Arrays.toString(chip_state));
+        //System.out.println(Arrays.toString(chip_state));
     }
 
     private String correctToHexString(int data, int length_to_show){
