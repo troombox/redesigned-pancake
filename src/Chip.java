@@ -179,6 +179,31 @@ public class Chip {
         for(int i=0;i<16;i++) System.out.println("V[" + i + "]:" + V[i]);
     }
 
+    /*  returns an array that holds current chip state
+        contents:
+        [0]-[15]: V[0] - V[F]
+        [16]: I
+        [17]: SP
+        [18]: PC
+        [19]-[20]: OP code
+    */
+    public int[] chipState(){
+        int[] chip_state = new int[21];
+        try {
+            for(int i=0; i<16; i++){
+                chip_state[i]=this.V[i];
+            }
+            chip_state[16]=this.I;
+            chip_state[17]=this.SP;
+            chip_state[18]=this.PC;
+            chip_state[19]=memory.readMemoryAtAddress(this.PC);
+            chip_state[20]=memory.readMemoryAtAddress(this.PC+1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return chip_state;
+    }
+
     //TEMP FUNCTIONS
     private void unimplementedOPcode(int OPcode){
         System.out.println( Integer.toHexString(OPcode) + " not implemented yet" );
@@ -197,7 +222,5 @@ public class Chip {
         memory.loadMemoryFromFile(filepath,PC);
         PC = MEMORY_START_POINT;
     }
-
-
 
 }
