@@ -24,7 +24,6 @@ public class Disassembler {
 
     public String DisassembleOp(){
         String output = "";
-        System.out.println(output);
         int first_nibble = code[0] >> 4;
         switch (first_nibble){
             case 0x00: {

@@ -6,7 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import java.util.Arrays;
+
 
 
 public class Emulator extends Application {
@@ -147,42 +147,3 @@ public class Emulator extends Application {
 
 
 }
-
-        /* //OLD CODE, WILL CLEAN IT LATER
-        //chip.dumpChipDataToOut();
-        chip.loadProgram(path);
-        //chip.dumpChipDataToOut();
-        try{
-            for(int i=0; i<10; i++) chip.emulateChip();
-        } catch (Exception e) {
-            System.out.println("Error");
-        }
-        //chip.dumpChipDataToOut();
-
-       for(int pc = 0; pc < memory.getPC(); pc+=2){
-            memory.DisassembleOp(pc);
-        }
-        System.out.println("\n" + "PC at: " + memory.getPC());
-        //memory.dumpMemoryToFile("D:\\dump.txt");*/
-        /*primaryStage.setTitle("Temp Emulator Window");
-
-        Button button = new Button();
-        button.setText("goto Scene2");
-        button.setOnAction( e -> primaryStage.setScene(scene2));
-        StackPane layout1 = new StackPane();
-        layout1.getChildren().add(button);
-        Scene scene1 = new Scene(layout1, 300, 250);
-
-        VBox layout2 = new VBox(20);
-        Button button2 = new Button("Hi");
-        button2.setOnAction(e -> primaryStage.setScene(scene1));
-        Label label = new Label("Text");
-        layout2.getChildren().addAll(label,button2);
-        scene2 = new Scene(layout2, 200, 200);
-        primaryStage.setScene(scene1);
-        primaryStage.show();
-         gridPane.addColumn(0,labelRegV0, labelRegV1, labelRegV2, labelRegV3, labelRegV4, labelRegV5,
-                labelRegV6, labelRegV7, labelRegV8, labelRegV9, labelRegVA, labelRegVB, labelRegVC, labelRegVD,
-                labelRegVE, labelRegVF, labelI, labelSP, labelPC, labelOP);
-
-        */

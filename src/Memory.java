@@ -15,6 +15,7 @@ public class Memory {
     private int memory_size;
 
     //for custom setup
+    /*will need rework
     public Memory(int size){
         memory_size = size;
         if ( memory_size > MAX_MEMORY_SIZE || memory_size <= 0){
@@ -23,15 +24,41 @@ public class Memory {
         }
         memory = new short[memory_size];
     }
+    */
 
     //for standard setup
     public Memory(){
         memory = new short[MAX_MEMORY_SIZE];
         memory_size = MAX_MEMORY_SIZE;
+        loadCharSetAtAddress(0);
     }
 
     public int getMemory_size() {
         return memory_size;
+    }
+
+    private void loadCharSetAtAddress(int address){
+        short[] chip8_fontset = {
+            0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+            0x20, 0x60, 0x20, 0x20, 0x70, // 1
+            0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+            0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+            0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+            0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+            0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+            0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+            0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+            0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+            0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+            0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+            0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+            0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+            0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+            0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+        };
+        for(int i = 0; i < chip8_fontset.length; i++){
+            memory[address + i] = chip8_fontset[i];
+        }
     }
 
     public void clearMemory(){

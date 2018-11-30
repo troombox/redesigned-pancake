@@ -14,6 +14,9 @@ public class Chip {
     //Display data
     private Display display;
 
+    //Key press data
+    private short key_press = -1;
+
     //8-bit registers
     private short[] V = new short[16];
     private int I = 0;
@@ -150,21 +153,88 @@ public class Chip {
                 this.PC = V[0]+new_pc_address;
                 this.PC+=2;
             } break;
-            case 0x0c: {
+            case 0x0c: {    //RAND
                 int reg = OPcode[0] & 0x0f;
                 int random = ThreadLocalRandom.current().nextInt(0, 255 + 1);
                 V[reg] = (short)(random & OPcode[1]);
                 this.PC+=2;
             } break;
-            case 0x0d: {
+            case 0x0d: {    //DRAW
                 int reg1 = OPcode[0] & 0x0f;
                 int reg2 = OPcode[1] >> 4;
                 int height = OPcode[1] & 0x0f;
                     opcodeDUtility(V[reg1], V[reg2], height);
                 this.PC+=2;
             } break;
-            case 0x0e: unimplementedOPcode(OPcode[0]); break;
-            case 0x0f: unimplementedOPcode(OPcode[0]); break;
+            case 0x0e: {    //KEY PRESS
+                int reg = OPcode[0] & 0x0f;
+                if(OPcode[1] == 0x9e){
+                    if(this.key_press == V[reg]){
+                        this.PC+=2;
+                    }
+                    this.PC+=2;
+                } else if(OPcode[1] == 0xa1){
+                    if(this.key_press != V[reg]){
+                        this.PC+=2;
+                    }
+                    this.PC+=2;
+                }
+            } break;
+            case 0x0f: {
+                int reg = OPcode[0] & 0x0f;
+                switch (OPcode[1]){
+                    case 0x07: {    //DELAY
+                        V[reg] = (short)this.delay_timer;
+                        this.PC+=2;
+                    } break;
+                    case 0x0a: {    //WAIT KEY
+                        if(this.key_press < 0){
+                            Thread.sleep(15);
+                            break;
+                        }
+                        V[reg] = this.key_press;
+                        this.key_press = -1;
+                        this.PC+=2;
+                    } break;
+                    case 0x15: {    //DELAY
+                        this.delay_timer = V[reg];
+                        this.PC+=2;
+                    } break;
+                    case 0x18: {    //SOUND
+                        this.sound_timer = V[reg];
+                        this.PC+=2;
+                    } break;
+                    case 0x1e: {    //ADD I VX
+                        this.I += V[reg];
+                        if(this.I>0xfff){
+                            V[0xf] = 1;
+                        }
+                        this.PC+=2;
+                    } break;
+                    case 0x29: {
+                        this.I = V[reg]*5; //the letters are placed starting at address 0
+                        this.PC+=2;
+                    } break;
+                    case 0x33: {
+                        memory.writeMemoryAtAddress(this.I,(short)(V[reg] / 100));
+                        memory.writeMemoryAtAddress((this.I+1),(short)((V[reg] / 10) % 10));
+                        memory.writeMemoryAtAddress((this.I+2),(short)((V[reg] % 100) % 10));
+                        this.PC+=2;
+                    } break;
+                    case 0x55: {
+                        for(int i = 0; i <=reg; i++){
+                            memory.writeMemoryAtAddress((this.I+i),V[i]);
+                        }
+                        this.PC+=2;
+                    } break;
+                    case 0x65: {
+                        for(int i = 0; i <=reg; i++){
+                            V[i] = memory.readMemoryAtAddress((this.I+i));
+                        }
+                        this.PC+=2;
+                    } break;
+                }
+            } break;
         }
 
     }
